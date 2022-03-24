@@ -8,6 +8,7 @@ import random
 import pandas as pd
 NUM=7
 
+#Checking if experiment branch works
 np.random.seed(NUM)
 random.seed(NUM)
 
