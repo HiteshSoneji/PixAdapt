@@ -78,4 +78,29 @@ def logisticMapPlot():
     plt.show()
 
 
-tentMapPlot()
+def henonMap(x, y, a, b):
+    x_ = 1 - (a * (x ** 2)) + y
+    y_ = b * x
+    return x_, y_
+
+def henonMapPlot():
+    n = 10000
+    a = np.linspace(1, 1.4, n)
+    x = np.linspace(0.1, 1, n)
+    y = np.linspace(0.1, 1, n)
+    b = 0.3
+    iterations = 1000
+    last = 100
+
+    for i in range(iterations):
+        x, y = henonMap(x, y, a, b)
+        if i >= (iterations - last):
+            plt.plot(a, x, ',k', alpha=.25, c='lightblue')
+
+    plt.title('Henon map')
+    plt.ylabel('$\it{x}$')
+    plt.xlabel('$\it{a}$')
+    plt.show()
+
+henonMapPlot()
+
