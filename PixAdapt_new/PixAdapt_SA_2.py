@@ -11,35 +11,35 @@ import time
 import math
 import os
 
-IMAGE = 1
-NUM = 14
+# IMAGE = 1
+# NUM = 14
 
 # IMAGE = 2
 # NUM = 23
 
 # IMAGE = 3
 # NUM = 69
-#
+# #
 # IMAGE = 4
 # NUM = 70
 #
 # IMAGE = 5
 # NUM = 83
-#
+# #
 # IMAGE = 6
 # NUM = 95
 #
 # IMAGE = 7
 # NUM = 96
-#
+# #
 # IMAGE = 8
 # NUM = 102
-#
+# #
 # IMAGE = 9
 # NUM = 103
 #
-# IMAGE = 10
-# NUM = 104
+IMAGE = 10
+NUM = 104
 
 np.random.seed(NUM)
 random.seed(NUM)
@@ -86,7 +86,7 @@ def run_sim(filepath, params):
 
     enc_uaci = encryptImage(img, best)
     best_eval = abs(33.46 - enc_uaci)
-    print(f"Epochs : {epochs} | Cost : {round(best_eval, 4)}")
+    print(f"Epochs : {epochs} | Cost : {round(best_eval, 4)}\n")
 
     curr, curr_eval = best, best_eval
 
@@ -133,7 +133,7 @@ def run_sim(filepath, params):
 
         if candidate_eval < best_eval:
             best, best_eval = candidate, candidate_eval
-            print(f"Epochs : {epochs} | Cost : {round(candidate_eval, 4)}")
+            print(f"Epochs : {epochs} | Cost : {round(candidate_eval, 4)}\n")
 
         if best_eval < 0.01:
             break
@@ -199,9 +199,10 @@ def encryptImage(img, params):
     cipher_image1 = temp
 
     cv.imwrite(f"analysis/encryptedImages/SA/image_{IMAGE}_enc.png", cipher_image)
-    print(f"ORIGINAL IMAGE ENTROPY : {shannon_entropy(img)}")
-    print(f"NPCR : {calc_NPCR(cipher_image, cipher_image1)}")
-    print(f"Entropy : {shannon_entropy(cipher_image)} \n")
+    print(f"ORIGINAL IMAGE ENTROPY : {round(shannon_entropy(img), 6)}")
+    print(f"Entropy : {round(shannon_entropy(cipher_image), 6)}")
+    print(f"NPCR : {round(calc_NPCR(cipher_image, cipher_image1), 6)}")
+    print(f"UACI : {round(calc_UACI(cipher_image, cipher_image1), 6)}")
     return calc_UACI(cipher_image, cipher_image1)
 
 
@@ -255,7 +256,7 @@ henon_map_y_seed = [0.01, 1]
 henon_map_a = [1, 2]
 henon_on = [0, 1]
 
-os.chdir("/Users/rt/PycharmProjects/PixAdapt/")
+os.chdir("//Users/hitesh/Desktop/PixAdapt/")
 
 params = [log_map_seed, log_map_r, random.choice([0, 1]),
           lfsr_seed, random.choice([0, 1]),
