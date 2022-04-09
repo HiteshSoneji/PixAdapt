@@ -7,12 +7,25 @@ import copy as cp
 import random
 import pandas as pd
 import time
+import os
 
-NUM = 4
-
+# Image 1
+NUM = 7
 np.random.seed(NUM)
 random.seed(NUM)
 
+def convert2sequences(arr, SEQ_1, SEQ_2):
+    seq1 = []
+    seq2 = []
+    for count, i in enumerate(arr.flatten()):
+        temp1 = np.binary_repr(int(i[SEQ_1[0]] + i[SEQ_1[1]] + i[SEQ_1[2]] + i[SEQ_1[3]], 2), width = 4)
+        temp2 = np.binary_repr(int(i[SEQ_2[0]] + i[SEQ_2[1]] + i[SEQ_2[2]] + i[SEQ_2[3]], 2), width = 4)
+        seq1.append(temp1)
+        seq2.append(temp2)
+    return np.array(seq1), np.array(seq2)
+
+def mergeSequence(SEQ_1, SEQ_2):
+    return np.array([i+j  for i, j in zip(SEQ_1, SEQ_2)])
 
 def run_sim(filepath, genotype1):
     start = time.time()
@@ -66,6 +79,9 @@ def encryptImage(img, genotype):
     henon_map_a = genotype[12]["values"][genotype[12]["ind"]]
     henon_on = genotype[13]["values"][genotype[13]["ind"]]
 
+    SEQ_1 = [0, 1, 2, 3]
+    SEQ_2 = [4, 5, 6, 7]
+
     PARAMETERS = [log_map_seed, log_map_r, log_map_on,
                   lfsr_seed, lfsr_on,
                   rossler_c, rossler_on,
@@ -86,8 +102,8 @@ def encryptImage(img, genotype):
         K2 = linear_shift_register(lfsr_seed, height, width)
         keys.append(K2)
 
-    # # generating pseudorandom numbers - Rossler map
-    # # params for Rossler map
+    # generating pseudorandom numbers - Rossler map
+    # params for Rossler map
     if rossler_on == 1:
         rossler_a = 0.1
         rossler_b = 0.1
@@ -107,13 +123,23 @@ def encryptImage(img, genotype):
         keys.append(K5)
 
     K = np.array([np.binary_repr(i, width=8) for i in np.zeros((height * width), dtype=int)])
-
     for k in keys:
         K = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K.flatten(), k.flatten())])
 
     # generating the encrypted image
     P_PRIME = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K, P.flatten())])
-    chaos_encrypted_image = np.array([int(i, 2) for i in P_PRIME]).reshape((height, width)).astype('uint8')
+    # chaos_encrypted_image = np.array([int(i, 2) for i in P_PRIME]).reshape((height, width)).astype('uint8')
+    a1, a2 = convert2sequences(P_PRIME, SEQ_1, SEQ_2)
+
+    A1, A2 = convert2sequences(P, SEQ_1, SEQ_2)
+
+    C1 = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=4) for i, j in zip(a1.flatten(), A2.flatten())])
+    C2 = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=4) for i, j in zip(a2.flatten(), A1.flatten())])
+    C = mergeSequence(C1, C2)
+
+    chaos_encrypted_image = np.array([int(i, 2) for i in C]).reshape((img.shape)).astype('uint8')
+
+    cv.imwrite("/Users/rt/Desktop/image_1.png", chaos_encrypted_image)
 
     return calc_UACI(chaos_encrypted_image, img), PARAMETERS
 
@@ -194,7 +220,7 @@ def print_genotype_vals(genotype):
 
 
 log_map_seed = create_continous_genes(0.01, 1)
-log_map_r = create_continous_genes(3.6, 4)
+log_map_r = create_continous_genes(3.7, 4)
 log_map_on = [0, 1]
 
 lfsr_seed = [np.binary_repr(i, width=8) for i in create_discrete_genes(0, 255)]
@@ -204,12 +230,12 @@ rossler_c = [9, 10, 13, 18]
 rossler_on = [0, 1]
 
 tent_map_seed = create_continous_genes(0.01, 1)
-tent_map_r = create_continous_genes(1, 2)
+tent_map_r = create_continous_genes(1.5, 2)
 tent_on = [0, 1]
 
 henon_map_x_seed = create_continous_genes(0.1, 1)
 henon_map_y_seed = create_continous_genes(0.1, 1)
-henon_map_a = create_continous_genes(1, 1.4)
+henon_map_a = create_continous_genes(1.5, 2)
 henon_on = [0, 1]
 
 log_map_seed_gene = make_gene(log_map_seed)
@@ -242,7 +268,9 @@ genotype1 = [log_map_seed_gene, log_map_r_gene, log_map_on_gene,
              tent_map_seed_gene, tent_map_r_gene, tent_on_gene,
              henon_map_x_seed_gene, henon_map_y_seed_gene, henon_map_a_gene, henon_on_gene]
 
-filepath = 'FINAL DATABASE/images/Image_5.jpeg'
+os.chdir("/Users/rt/PycharmProjects/PixAdapt/")
+
+filepath = 'FINAL DATABASE/images/Image_1.jpeg'
 img_params = run_sim(filepath, genotype1)
 
 # cols = ["log_map_seed", "log_map_r", "log_map_on",

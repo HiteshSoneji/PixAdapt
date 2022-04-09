@@ -1,44 +1,66 @@
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
 from utilityFunctions.chaosFunctions import *
 from utilityFunctions.utils import *
 import cv2 as cv
+import numpy as np
+import matplotlib.pyplot as plt
 import copy as cp
 import random
 import pandas as pd
-from skimage.measure import shannon_entropy
-import os
 import time
+import os
 
-NUM = 9
+# IMAGE = 1
+# NUM = 14
+
+# IMAGE = 2
+# NUM = 23
+
+# IMAGE = 3
+# NUM = 69
+#
+# IMAGE = 4
+# NUM = 70
+#
+# IMAGE = 5
+# NUM = 83
+#
+# IMAGE = 6
+# NUM = 95
+#
+# IMAGE = 7
+# NUM = 96
+#
+# IMAGE = 8
+# NUM = 102
+#
+# IMAGE = 9
+# NUM = 103
+#
+IMAGE = 10
+NUM = 104
 
 np.random.seed(NUM)
 random.seed(NUM)
 
-def getFrame(sec):
-    video.set(cv2.CAP_PROP_POS_MSEC, sec*1000)
-    hasFrames, image = video.read()
-    return hasFrames, image
-
-def run_sim(img, genotype1, seq):
+def run_sim(filepath, genotype1):
     start = time.time()
     img_params = []
-    seed_enc = seq
-    cost, seq, PARAMETERS = encryptImage(img, genotype1, seed_enc)
+    img = cv.imread(filepath, 0)
+    cost, PARAMETERS = encryptImage(img, genotype1)
     PARAMETERS.append(cost)
     img_params.append(PARAMETERS)
     print(f"After 1 generation, cost : {cost} | {print_genotype_vals(genotype1)}")
+    print()
     epochs = 2
 
     while True:
         best = 33.46
-        if abs(best - cost) < 1:
+        if abs(best - cost) < 0.01:
             break
         genotype2 = cp.deepcopy(genotype1)
         mutate_genotype(genotype2)
-        cost2, seq, PARAMETERS = encryptImage(img, genotype2, seed_enc)
-        PARAMETERS.append(cost)
+        cost2, PARAMETERS = encryptImage(img, genotype2)
+        PARAMETERS.append(cost2)
         img_params.append(PARAMETERS)
         if abs(best - cost) > abs(best - cost2):
             cost = cost2
@@ -46,12 +68,12 @@ def run_sim(img, genotype1, seq):
             print(f"After {epochs} generation, cost : {cost} | {print_genotype_vals(genotype1)}")
         epochs += 1
     end = time.time()
-    print(f"OVERALL TIME TAKEN FOR {epochs} epochs : {round(end - start, 6)}")
-    print(f"Genotype after simulation : {print_genotype_vals(genotype1)}\nFitness : {cost}\n\n")
+    print(f"OVERALL TIME TAKEN FOR {epochs} epochs : {round(end-start, 6)}")
+    print(f"Genotype after simulation : {print_genotype_vals(genotype1)}\nFitness : {round(cost, 2)}\n\n")
     return img_params
 
 
-def encryptImage(img, genotype, seq):
+def encryptImage(img, genotype):
     height, width = img.shape
 
     log_map_seed = genotype[0]["values"][genotype[0]["ind"]]
@@ -73,61 +95,38 @@ def encryptImage(img, genotype, seq):
     henon_map_a = genotype[12]["values"][genotype[12]["ind"]]
     henon_on = genotype[13]["values"][genotype[13]["ind"]]
 
+    SEQ_1 = [0, 1, 2, 3]
+    SEQ_2 = [4, 5, 6, 7]
+
     PARAMETERS = [log_map_seed, log_map_r, log_map_on,
                   lfsr_seed, lfsr_on,
                   rossler_c, rossler_on,
                   tent_map_seed, tent_map_r, tent_on,
                   henon_map_x_seed, henon_map_y_seed, henon_map_a, henon_on]
 
-    P = convert_to_binary(img)
+    change_y = np.random.randint(0, width)
+    change_x = np.random.randint(0, height)
+    val = np.random.randint(0, 255)
 
-    keys = [convert_to_binary(seq.astype("uint8"))]
+    new_img = cp.deepcopy(img)
+    new_img[change_x, change_y] = val
 
-    # generating pseudorandom numbers - Logistic map
-    if log_map_on == 1:
-        K1 = logistic_map(height, width, log_map_seed, log_map_r)
-        keys.append(K1)
+    temp = cp.deepcopy(img)
+    for i in range(2):
+        temp, a1, a2 = adaptPix(temp, SEQ_1, SEQ_2, PARAMETERS)
+    cipher_image = temp
 
-    # generating pseudorandom numbers - Linear feedback shift register
-    if lfsr_on == 1:
-        K2 = linear_shift_register(lfsr_seed, height, width)
-        keys.append(K2)
+    temp = cp.deepcopy(new_img)
 
-    # # generating pseudorandom numbers - Rossler map
-    # # params for Rossler map
-    if rossler_on == 1:
-        rossler_a = 0.1
-        rossler_b = 0.1
-        rossler_seed = [1, 1, 0]
-        K3, y, z = rosslerMap(height, width, rossler_a, rossler_b, rossler_c, rossler_seed)
-        # XOR
-        # 1. K4 = rossler params - x and y
-        # 2. K5 = rossler params - K4 and z
-        # K_XY = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(x.flatten(), y.flatten())])
-        # K3 = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K_XY.flatten(), z.flatten())])
-        keys.append(K3)
+    for i in range(2):
+        temp, a1_1, a2_1 = adaptPix(temp, SEQ_1, SEQ_2, PARAMETERS)
+    cipher_image1 = temp
 
-    # Tent map
-    if tent_on == 1:
-        K4 = tentMap(height, width, tent_map_seed, tent_map_r)
-        keys.append(K4)
-
-    # Henon map
-    b = 0.3
-    if henon_on == 1:
-        K5 = henonMap(height, width, henon_map_x_seed, henon_map_y_seed, henon_map_a, b)
-        keys.append(K5)
-
-    K = np.array([np.binary_repr(i, width=8) for i in np.zeros((height * width), dtype=int)])
-
-    for k in keys:
-        K = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K.flatten(), k.flatten())])
-
-    # generating the encrypted image
-    P_PRIME = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K, P.flatten())])
-    chaos_encrypted_image = np.array([int(i, 2) for i in P_PRIME]).reshape((height, width)).astype('uint8')
-
-    return calc_UACI(chaos_encrypted_image, img), chaos_encrypted_image, PARAMETERS
+    cv.imwrite(f"analysis/encryptedImages/GA/image_{IMAGE}_enc.png", cipher_image)
+    print(f"ORIGINAL IMAGE ENTROPY : {shannon_entropy(img)}")
+    print(f"NPCR : {calc_NPCR(cipher_image, cipher_image1)}")
+    print(f"Entropy : {shannon_entropy(cipher_image)} \n")
+    return calc_UACI(cipher_image, cipher_image1), PARAMETERS
 
 
 """
@@ -185,11 +184,11 @@ def evaluate_genotype(orig_img, enc_img):
 
 
 def create_discrete_genes(start, end):
-    return random.sample(range(start, end), 100)
+    return random.sample(range(start, end), 10)
 
 
 def create_continous_genes(start, end):
-    return np.random.uniform(start, end, size=100)
+    return np.random.uniform(start, end, size=10)
 
 
 def print_genotype_vals(genotype):
@@ -206,23 +205,22 @@ def print_genotype_vals(genotype):
 
 
 log_map_seed = create_continous_genes(0.01, 1)
-log_map_r = create_continous_genes(3.6, 4)
+log_map_r = create_continous_genes(3.7, 4) # actual : 3.6-4
 log_map_on = [0, 1]
 
 lfsr_seed = [np.binary_repr(i, width=8) for i in create_discrete_genes(0, 255)]
 lfsr_on = [0, 1]
 
-# rossler_c = create_continous_genes(5, 30)
 rossler_c = [9, 10, 13, 18]
 rossler_on = [0, 1]
 
 tent_map_seed = create_continous_genes(0.01, 1)
-tent_map_r = create_continous_genes(1, 2)
+tent_map_r = create_continous_genes(1, 2) # actual 1.5 - 2
 tent_on = [0, 1]
 
 henon_map_x_seed = create_continous_genes(0.1, 1)
 henon_map_y_seed = create_continous_genes(0.1, 1)
-henon_map_a = create_continous_genes(1, 1.4)
+henon_map_a = create_continous_genes(1, 2) # actual 1.5 - 2
 henon_on = [0, 1]
 
 log_map_seed_gene = make_gene(log_map_seed)
@@ -244,40 +242,19 @@ henon_map_y_seed_gene = make_gene(henon_map_y_seed)
 henon_map_a_gene = make_gene(henon_map_a)
 henon_on_gene = make_gene(henon_on)
 
-# print(log_map_seed_gene, log_map_r_gene, log_map_on_gene)
-# print(lfsr_seed_gene, lfsr_on_gene)
-# print(tent_map_seed_gene, tent_map_r_gene, tent_on_gene)
-# print(henon_map_x_seed_gene, henon_map_y_seed_gene, henon_map_a_gene, henon_on_gene)
-
 genotype1 = [log_map_seed_gene, log_map_r_gene, log_map_on_gene,
              lfsr_seed_gene, lfsr_on_gene,
              rossler_c_gene, rossler_on_gene,
              tent_map_seed_gene, tent_map_r_gene, tent_on_gene,
              henon_map_x_seed_gene, henon_map_y_seed_gene, henon_map_a_gene, henon_on_gene]
 
-# genotype1 = [log_map_seed_gene, log_map_r_gene, log_map_on_gene,
-#              lfsr_seed_gene, lfsr_on_gene,
-#              tent_map_seed_gene, tent_map_r_gene, tent_on_gene,
-#              henon_map_x_seed_gene, henon_map_y_seed_gene, henon_map_a_gene, henon_on_gene]
 os.chdir("/Users/rt/PycharmProjects/PixAdapt/")
-video = cv2.VideoCapture("FINAL DATABASE/videos/sample.mp4")
 
-sec = 0
-frameRate = 4
-count = 1
-success = getFrame(sec)
-frames = []
-while success:
-    count += 1
-    sec += frameRate
-    sec = round(sec, 2)
-    success, image = getFrame(sec)
-    if success:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image = cv2.resize(image, (500, 500))
-        frames.append(image)
-frames = np.array(frames)
-seq = np.zeros(frames[0].shape)
+filepath = f'FINAL DATABASE/images/Image_{IMAGE}.jpeg'
+
+
+img_params = run_sim(filepath, genotype1)
+
 
 cols = ["log_map_seed", "log_map_r", "log_map_on",
         "lfsr_seed", "lfsr_on",
@@ -286,8 +263,5 @@ cols = ["log_map_seed", "log_map_r", "log_map_on",
         "henon_map_x_seed", "henon_map_y_seed", "henon_map_a", "henon_on",
         "fitness"]
 
-for img_num, img in enumerate(frames):
-    print(f"IMAGE NUMBER {img_num+1}")
-    data = run_sim(img, genotype1, seq)
-    df = pd.DataFrame(data, columns=cols)
-    df.to_csv(f"csv files/PA_2/IMG_{img_num+1}.csv")
+df = pd.DataFrame(img_params, columns=cols)
+df.to_csv(f"csv files/hill climb/IMG_{IMAGE}.csv")

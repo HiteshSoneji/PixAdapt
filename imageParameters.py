@@ -56,6 +56,9 @@ henon_map_x_seed = params[10]
 henon_map_y_seed = params[11]
 henon_map_a = params[12]
 
+SEQ_1 = [0, 1, 2, 3]
+SEQ_2 = [4, 5, 6, 7]
+
 
 K1 = logistic_map(height, width, log_map_seed, log_map_r)
 keys.append(K1)

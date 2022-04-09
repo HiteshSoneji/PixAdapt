@@ -46,9 +46,8 @@ def run_sim(img, genotype1, seq):
             print(f"After {epochs} generation, cost : {cost} | {print_genotype_vals(genotype1)}")
         epochs += 1
     end = time.time()
-    # print(f"OVERALL TIME TAKEN FOR {epochs} epochs : {round(end - start, 6)}")
-    # print(f"Genotype after simulation : {print_genotype_vals(genotype1)}\nFitness : {cost}\n\n")
-    print("IMAGE 1 \n\n\n")
+    print(f"OVERALL TIME TAKEN FOR {epochs} epochs : {round(end - start, 6)}")
+    print(f"Genotype after simulation : {print_genotype_vals(genotype1)}\nFitness : {cost}\n\n")
     return img_params
 
 
@@ -127,10 +126,6 @@ def encryptImage(img, genotype, seq):
     # generating the encrypted image
     P_PRIME = np.array([np.binary_repr(int(i, 2) ^ int(j, 2), width=8) for i, j in zip(K, P.flatten())])
     chaos_encrypted_image = np.array([int(i, 2) for i in P_PRIME]).reshape((height, width)).astype('uint8')
-
-    print(f"Original image entropy : {shannon_entropy(img)}")
-    print(f"Entropy after encryption : {shannon_entropy(chaos_encrypted_image)}")
-    print(f"NPCR : {calc_NPCR(chaos_encrypted_image, img)}")
 
     return calc_UACI(chaos_encrypted_image, img), chaos_encrypted_image, PARAMETERS
 
@@ -275,5 +270,15 @@ while success:
 frames = np.array(frames)
 seq = np.zeros(frames[0].shape)
 
+cols = ["log_map_seed", "log_map_r", "log_map_on",
+        "lfsr_seed", "lfsr_on",
+        "rossler_c", "rossler_on",
+        "tent_map_seed", "tent_map_r", "tent_on",
+        "henon_map_x_seed", "henon_map_y_seed", "henon_map_a", "henon_on",
+        "fitness"]
+
 for img_num, img in enumerate(frames):
+    print(f"IMAGE NUMBER {img_num+1}")
     data = run_sim(img, genotype1, seq)
+    df = pd.DataFrame(data, columns=cols)
+    df.to_csv(f"csv files/PA_2/IMG_{img_num+1}.csv")
