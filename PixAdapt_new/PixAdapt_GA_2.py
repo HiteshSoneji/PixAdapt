@@ -275,3 +275,4 @@ cols = ["log_map_seed", "log_map_r", "log_map_on",
 
 df = pd.DataFrame(data, columns=cols)
 df.to_csv(f"csv files/simulated annealing/IMG_{IMAGE}.csv")
+print()
