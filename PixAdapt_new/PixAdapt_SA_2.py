@@ -53,7 +53,7 @@ def run_sim(filepath, params):
     log_map_r = params_[1][0]
     log_map_on = params_[2]
 
-    lfsr_seed = params_[3][0]
+    lfsr_seed = np.binary_repr(params_[3][0], width=8)
     lfsr_on = params_[4]
 
     rossler_c = params_[5][0]
@@ -101,7 +101,7 @@ def run_sim(filepath, params):
         log_map_r = wrap(log_map_r + random.gauss(0.1, 0.01), params_[1][1])
         log_map_on = random.choice([0, 1])
 
-        lfsr_seed = wrap(lfsr_seed + random.choice(range(1, 10)), params_[3][1])
+        lfsr_seed = np.binary_repr(wrap(int(lfsr_seed, 2) + random.choice(range(1, 10)), params_[3][1]), width=8)
         lfsr_on = random.choice([0, 1])
 
         rossler_c = wrap(rossler_c + random.gauss(0.1, 0.1), params_[5][1])
@@ -149,27 +149,27 @@ def run_sim(filepath, params):
     print(f"Time taken : {round(time_taken, 6)} | time per pass = {time_taken/epochs}")
     return best, best_eval, data
 
-def encryptImage(img, genotype):
+def encryptImage(img, params):
     height, width = img.shape
 
-    log_map_seed = genotype[0]["values"][genotype[0]["ind"]]
-    log_map_r = genotype[1]["values"][genotype[1]["ind"]]
-    log_map_on = genotype[2]["values"][genotype[2]["ind"]]
+    log_map_seed = params[0]
+    log_map_r = params[1]
+    log_map_on = params[2]
 
-    lfsr_seed = genotype[3]["values"][genotype[3]["ind"]]
-    lfsr_on = genotype[4]["values"][genotype[4]["ind"]]
+    lfsr_seed = params[3]
+    lfsr_on = params[4]
 
-    rossler_c = genotype[5]["values"][genotype[5]["ind"]]
-    rossler_on = genotype[6]["values"][genotype[6]["ind"]]
+    rossler_c = params[5]
+    rossler_on = params[6]
 
-    tent_map_seed = genotype[7]["values"][genotype[7]["ind"]]
-    tent_map_r = genotype[8]["values"][genotype[8]["ind"]]
-    tent_on = genotype[9]["values"][genotype[9]["ind"]]
+    tent_map_seed = params[7]
+    tent_map_r = params[8]
+    tent_on = params[9]
 
-    henon_map_x_seed = genotype[10]["values"][genotype[10]["ind"]]
-    henon_map_y_seed = genotype[11]["values"][genotype[11]["ind"]]
-    henon_map_a = genotype[12]["values"][genotype[12]["ind"]]
-    henon_on = genotype[13]["values"][genotype[13]["ind"]]
+    henon_map_x_seed = params[10]
+    henon_map_y_seed = params[11]
+    henon_map_a = params[12]
+    henon_on = params[13]
 
     SEQ_1 = [0, 1, 2, 3]
     SEQ_2 = [4, 5, 6, 7]
