@@ -18,7 +18,8 @@ year = {2022},
 issn = {0960-0779},
 doi = {https://doi.org/10.1016/j.chaos.2022.112628},
 url = {https://www.sciencedirect.com/science/article/pii/S0960077922008098},
-author = {Rohan Tuli and Hitesh Narayan Soneji and Prathamesh Churi},
+author = {Rohan Tuli and Hitesh Narayan Soneji and Prathamesh Churi}}
+publisher = {Elsevier}
 ```
 
 ## License
