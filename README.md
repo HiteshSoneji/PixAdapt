@@ -9,17 +9,15 @@ Image encryption using genetic approach is a recent and advanced technique which
 If you use any of the code or refer to this paper, please cite using:
 
 ```
-@article{TULI2022112628,
-title = {PixAdapt: A novel approach to adaptive image encryption},
-journal = {Chaos, Solitons & Fractals},
-volume = {164},
-pages = {112628},
-year = {2022},
-issn = {0960-0779},
-doi = {https://doi.org/10.1016/j.chaos.2022.112628},
-url = {https://www.sciencedirect.com/science/article/pii/S0960077922008098},
-author = {Rohan Tuli and Hitesh Narayan Soneji and Prathamesh Churi}}
-publisher = {Elsevier}
+@article{tuli2022pixadapt,
+  title={PixAdapt: A novel approach to adaptive image encryption},
+  author={Tuli, Rohan and Soneji, Hitesh Narayan and Churi, Prathamesh},
+  journal={Chaos, Solitons \& Fractals},
+  volume={164},
+  pages={112628},
+  year={2022},
+  publisher={Elsevier}
+}
 ```
 
 ## License
